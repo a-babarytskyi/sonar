@@ -1,11 +1,11 @@
-FROM rust:latest as builder
+FROM rust:alpine AS builder
 COPY . /usr/src/sonard
 WORKDIR /usr/src/sonard
 
 RUN cargo build --release
 
 
-FROM debian:bookworm-slim as runtime
+FROM alpine AS runtime
 
 COPY --from=builder /usr/src/sonard/target/release/sonard /bin/sonard
 

@@ -25,15 +25,17 @@ struct Args {
 async fn get_container_metrics_json_handler(
     State(state): State<Arc<Args>>,
 ) -> Json<Vec<ContainerStats>> {
-    let container_stats = fetch_container_stats(&state.socket_path);
+    let (_, container_stats) = fetch_container_stats(&state.socket_path);
     Json::from(container_stats)
 }
 
 async fn get_container_metrics_prometheus_handler(
     State(state): State<Arc<Args>>,
 ) -> String {
-    let container_stats = fetch_container_stats(&state.socket_path);
-    json_to_prometheus(container_stats)
+    println!("Inside get_container_metrics_prometheus_handler");
+    let (containers, container_stats) =
+        fetch_container_stats(&state.socket_path);
+    json_to_prometheus(containers, container_stats)
 }
 
 #[tokio::main]
@@ -41,6 +43,8 @@ async fn main() {
     let args = Arc::new(Args::parse());
     let addr = format!("0.0.0.0:{}", args.port);
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
+
+    dbg!(&args);
 
     let app = Router::new()
         .route("/", get(get_container_metrics_json_handler))

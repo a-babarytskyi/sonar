@@ -1,7 +1,10 @@
-use crate::models::ContainerStats;
+use crate::models::{Container, ContainerStats};
 
 #[allow(dead_code)]
-pub fn json_to_prometheus(container_stats: Vec<ContainerStats>) -> String {
+pub fn json_to_prometheus(
+    containers: Vec<Container>,
+    container_stats: Vec<ContainerStats>,
+) -> String {
     let mut output = String::new();
 
     // Add HELP and TYPE headers
@@ -22,7 +25,13 @@ pub fn json_to_prometheus(container_stats: Vec<ContainerStats>) -> String {
     output.push_str("# TYPE container_cpu_usage_percent gauge\n");
 
     for stats in container_stats {
-        let container_name = &stats.name;
+        let container_name = match containers.iter().find(|&x| x.id == stats.id)
+        {
+            Some(container) => &container.names[0][1..],
+            None => {
+                continue;
+            }
+        };
 
         // Calculate memory usage percentage
         let cache = stats.memory_stats.stats.file as f64;

@@ -4,10 +4,13 @@ use serde::{Deserialize, Serialize};
 pub struct Container {
     #[serde(rename = "Id")]
     pub id: String,
+    #[serde(rename = "Names")]
+    pub names: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ContainerStats {
+    pub id: String,
     pub name: String,
     pub cpu_stats: CpuStats,
     pub memory_stats: MemoryStats,

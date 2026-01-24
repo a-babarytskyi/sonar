@@ -62,7 +62,9 @@ pub fn parse_response_body(sock: UnixStream) -> String {
     }
 }
 
-pub fn fetch_container_stats(socket_path: &String) -> Vec<ContainerStats> {
+pub fn fetch_container_stats(
+    socket_path: &String,
+) -> (Vec<Container>, Vec<ContainerStats>) {
     let start = Instant::now();
 
     let mut sock = match UnixStream::connect(socket_path) {
@@ -78,13 +80,12 @@ pub fn fetch_container_stats(socket_path: &String) -> Vec<ContainerStats> {
     let json = parse_response_body(sock);
     let containers: Vec<Container> =
         serde_json::from_str(json.as_str()).unwrap();
-
     println!("Found {} containers", containers.len());
 
     let mut container_stats: Vec<ContainerStats> =
         Vec::with_capacity(containers.len());
 
-    for container in containers {
+    for container in &containers {
         let mut sock = match UnixStream::connect(socket_path) {
             Ok(socket) => socket,
             Err(_) => {
@@ -102,5 +103,5 @@ pub fn fetch_container_stats(socket_path: &String) -> Vec<ContainerStats> {
     }
 
     println!("Total execution time: {:?}", start.elapsed());
-    container_stats
+    (containers, container_stats)
 }
