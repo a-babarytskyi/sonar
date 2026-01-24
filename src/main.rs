@@ -44,7 +44,7 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
 
     let app = Router::new()
-        .route("/", get(get_container_metrics_json_handler))
+        .route("/json", get(get_container_metrics_json_handler))
         .route("/metrics", get(get_container_metrics_prometheus_handler))
         .with_state(args);
 
