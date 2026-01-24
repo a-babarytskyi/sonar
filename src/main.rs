@@ -1,0 +1,52 @@
+use clap::Parser;
+
+mod docker;
+mod models;
+mod prometheus;
+
+use docker::fetch_container_stats;
+use prometheus::json_to_prometheus;
+
+use axum::{Router, extract::State, response::Json, routing::get};
+use models::ContainerStats;
+use std::sync::Arc;
+
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    /// Name of the person to greet
+    #[arg(long, default_value = "/etc/docker/docker.sock")]
+    socket_path: String,
+
+    #[arg(long, short, default_value = "3000")]
+    port: u32,
+}
+
+async fn get_container_metrics_json_handler(
+    State(state): State<Arc<Args>>,
+) -> Json<Vec<ContainerStats>> {
+    let container_stats = fetch_container_stats(&state.socket_path);
+    Json::from(container_stats)
+}
+
+async fn get_container_metrics_prometheus_handler(
+    State(state): State<Arc<Args>>,
+) -> String {
+    let container_stats = fetch_container_stats(&state.socket_path);
+    json_to_prometheus(container_stats)
+}
+
+#[tokio::main]
+async fn main() {
+    let args = Arc::new(Args::parse());
+    let addr = format!("0.0.0.0:{}", args.port);
+    let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
+
+    let app = Router::new()
+        .route("/", get(get_container_metrics_json_handler))
+        .route("/metrics", get(get_container_metrics_prometheus_handler))
+        .with_state(args);
+
+    println!("Listening on {addr}");
+    axum::serve(listener, app).await.unwrap();
+}

@@ -1,0 +1,12 @@
+{
+  "[rust]": {
+    "editor.defaultFormatter": "rust-lang.rust-analyzer",
+    "editor.formatOnSave": true
+  },
+  "editor.rulers": [80],
+//   "editor.guides.indentation": true,
+//   "editor.guides.bracketPairs": true,
+//   "editor.guides.bracketPairsHorizontal": true,
+//   "editor.bracketPairColorization": true,
+//   "editor.guides.highlightActiveIndentation": true
+}

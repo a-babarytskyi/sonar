@@ -1,0 +1,5 @@
+# Clippy configuration for sonard
+
+# Warn on clippy lints
+too-many-arguments-threshold = 8
+type-complexity-threshold = 500
