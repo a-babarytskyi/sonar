@@ -1,4 +1,4 @@
-# Clippy configuration for sonard
+# Clippy configuration for sonar
 
 # Warn on clippy lints
 too-many-arguments-threshold = 8

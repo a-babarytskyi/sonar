@@ -1,4 +1,4 @@
-# sonard
+# sonar
 
 A lightweight Docker container metrics exporter for Prometheus, written in Rust.
 
@@ -15,7 +15,7 @@ A lightweight Docker container metrics exporter for Prometheus, written in Rust.
 ## Usage
 
 ```bash
-sonard --port 3000 --socket-path /var/run/docker.sock
+sonar --port 3000 --socket-path /var/run/docker.sock
 ```
 
 ### Docker
@@ -27,8 +27,8 @@ docker run -v /var/run/docker.sock:/var/run/docker.sock -p 3000:3000 ababarytsky
 Or build from source:
 
 ```bash
-docker build -t sonard .
-docker run -v /var/run/docker.sock:/var/run/docker.sock -p 3000:3000 sonard
+docker build -t sonar .
+docker run -v /var/run/docker.sock:/var/run/docker.sock -p 3000:3000 sonar
 ```
 
 ## Metrics
