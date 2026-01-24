@@ -14,7 +14,6 @@ use std::sync::Arc;
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
-    /// Name of the person to greet
     #[arg(long, default_value = "/etc/docker/docker.sock")]
     socket_path: String,
 
@@ -43,8 +42,6 @@ async fn main() {
     let args = Arc::new(Args::parse());
     let addr = format!("0.0.0.0:{}", args.port);
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
-
-    dbg!(&args);
 
     let app = Router::new()
         .route("/", get(get_container_metrics_json_handler))
