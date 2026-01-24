@@ -10,7 +10,6 @@ pub struct Container {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ContainerStats {
-    pub id: String,
     pub name: String,
     pub cpu_stats: CpuStats,
     pub memory_stats: MemoryStats,
