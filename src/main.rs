@@ -8,7 +8,7 @@ use docker::fetch_container_stats;
 use prometheus::json_to_prometheus;
 
 use axum::{Router, extract::State, response::Json, routing::get};
-use models::ContainerStats;
+use models::{ContainerInfo, ContainerStats};
 use std::sync::Arc;
 
 #[derive(Parser, Debug)]
@@ -23,9 +23,20 @@ struct Args {
 
 async fn get_container_metrics_json_handler(
     State(state): State<Arc<Args>>,
-) -> Json<Vec<ContainerStats>> {
-    let (_, container_stats) = fetch_container_stats(&state.socket_path);
-    Json::from(container_stats)
+) -> Json<Vec<ContainerInfo>> {
+    let (containers, container_stats) =
+        fetch_container_stats(&state.socket_path);
+    Json::from(
+        container_stats
+            .into_iter()
+            .zip(containers)
+            .map(|f| ContainerInfo {
+                id: f.1.id,
+                names: f.1.names,
+                stats: f.0,
+            })
+            .collect::<Vec<ContainerInfo>>(),
+    )
 }
 
 async fn get_container_metrics_prometheus_handler(

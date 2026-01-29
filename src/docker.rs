@@ -1,18 +1,25 @@
+use crate::models::{Container, ContainerStats};
+use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Read, Write};
 use std::os::unix::net::UnixStream;
 use std::time::Instant;
 
-use crate::models::{Container, ContainerStats};
-
 const CONTAINER_LIST_REQUEST: &str = "GET /containers/json HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n";
 const CONTAINER_STATS_REQUEST: &str = "GET /containers/{}/stats?stream=false&one-shot=true HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n";
 
-pub fn parse_response_body(sock: UnixStream) -> String {
+struct SocketHttpResponse {
+    headers: HashMap<String, String>,
+    body: String,
+}
+
+pub fn parse_response(sock: UnixStream) -> Option<SocketHttpResponse> {
     let start = Instant::now();
     let mut reader = BufReader::new(sock);
 
     let mut content_length = 0;
     let mut is_chunked = false;
+
+    let mut headers = HashMap::<String, String>::new();
 
     // Read headers
     loop {
@@ -54,12 +61,34 @@ pub fn parse_response_body(sock: UnixStream) -> String {
             reader.read_line(&mut String::new()).unwrap(); // trailing \r\n
         }
         println!("Finished reading chunked: {:?}", start.elapsed());
-        String::from_utf8(body).unwrap()
+        Some(SocketHttpResponse {
+            headers,
+            body: String::from_utf8(body).unwrap(),
+        })
     } else {
         let mut body = vec![0; content_length];
         reader.read_exact(&mut body).unwrap();
-        String::from_utf8(body).unwrap()
+        Some(SocketHttpResponse {
+            headers,
+            body: String::from_utf8(body).unwrap(),
+        })
     }
+}
+
+pub fn http_to_socket(
+    socket_path: &String,
+    request: &str,
+) -> Option<SocketHttpResponse> {
+    let mut sock = match UnixStream::connect(socket_path) {
+        Ok(socket) => socket,
+        Err(e) => {
+            println!("Couldn't connect to socket: {:?}", e);
+            return None;
+        }
+    };
+
+    sock.write_all(request.as_bytes()).unwrap();
+    parse_response(sock)
 }
 
 pub fn fetch_container_stats(
@@ -67,38 +96,27 @@ pub fn fetch_container_stats(
 ) -> (Vec<Container>, Vec<ContainerStats>) {
     let start = Instant::now();
 
-    let mut sock = match UnixStream::connect(socket_path) {
-        Ok(socket) => socket,
-        Err(_) => {
-            println!("Ooops!");
-            panic!()
-        }
-    };
-
-    sock.write_all(CONTAINER_LIST_REQUEST.as_bytes()).unwrap();
-
-    let json = parse_response_body(sock);
+    // Fetch container list
+    let json = http_to_socket(socket_path, CONTAINER_LIST_REQUEST);
     let containers: Vec<Container> =
-        serde_json::from_str(json.as_str()).unwrap();
+        serde_json::from_str(json.unwrap().body.as_str()).unwrap();
     println!("Found {} containers", containers.len());
 
+    // Preallocate vector for container
     let mut container_stats: Vec<ContainerStats> =
         Vec::with_capacity(containers.len());
 
+    // Fetch stats
     for container in &containers {
-        let mut sock = match UnixStream::connect(socket_path) {
-            Ok(socket) => socket,
-            Err(_) => {
-                println!("Ooops!");
-                panic!()
-            }
-        };
-        let message = CONTAINER_STATS_REQUEST.replace("{}", &container.id);
-        sock.write_all(message.as_bytes()).unwrap();
+        let json = http_to_socket(
+            socket_path,
+            CONTAINER_STATS_REQUEST
+                .replace("{}", &container.id)
+                .as_str(),
+        );
 
-        let resp_body = parse_response_body(sock);
         let stats: ContainerStats =
-            serde_json::from_str(resp_body.as_str()).unwrap();
+            serde_json::from_str(json.unwrap().body.as_str()).unwrap();
         container_stats.push(stats);
     }
 

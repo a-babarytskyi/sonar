@@ -16,6 +16,13 @@ pub struct ContainerStats {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct ContainerInfo {
+    pub id: String,
+    pub names: Vec<String>,
+    pub stats: ContainerStats,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct CpuStats {
     pub cpu_usage: CpuUsage,
     pub system_cpu_usage: Option<u64>,
