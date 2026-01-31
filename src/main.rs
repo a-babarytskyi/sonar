@@ -8,7 +8,7 @@ use docker::fetch_container_stats;
 use prometheus::json_to_prometheus;
 
 use axum::{Router, extract::State, response::Json, routing::get};
-use models::{ContainerInfo, ContainerStats};
+use models::ContainerInfo;
 use std::sync::Arc;
 
 #[derive(Parser, Debug)]

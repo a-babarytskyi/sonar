@@ -41,8 +41,39 @@ docker run -v /var/run/docker.sock:/var/run/docker.sock -p 3000:3000 sonar
 
 ## Endpoints
 
-- `GET /metrics` - Prometheus metrics
-- `GET /json` - Raw JSON stats
+- `GET /metrics`
+  - **Description:** Returns Prometheus-formatted metrics for all running containers.
+  - **Response Example:**
+    ```text
+    # HELP container_cpu_usage_percent CPU usage percentage
+    # TYPE container_cpu_usage_percent gauge
+    container_cpu_usage_percent{container="sonar"} 0.12
+    container_memory_usage_bytes{container="sonar"} 123456
+    ...
+    ```
+
+- `GET /json`
+  - **Description:** Returns raw container stats in JSON format.
+  - **Response Schema:**
+    ```json
+    [
+    	{
+    		"id": "<container_id>",
+    		"name": "<container_name>",
+    		"cpu_usage_percent": 0.12,
+    		"memory_usage_percent": 0.5,
+    		"memory_usage_bytes": 123456
+    	},
+    	...
+    ]
+    ```
+
+## Docker Image & Resource Usage
+
+- **Image Size:** ~4.5 MB (compressed)
+- **Runtime Memory Usage:** 700–900 KB RAM
+
+This makes the container lightweight and suitable for resource-constrained environments.
 
 ## License
 
