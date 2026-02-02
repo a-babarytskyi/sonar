@@ -10,7 +10,7 @@ A lightweight Docker container metrics exporter for Prometheus, written in Rust.
 
 ## Requirements
 
-- Docker API v1.47+
+- Docker API v1.41+
 
 ## Usage
 
