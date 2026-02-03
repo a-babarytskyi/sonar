@@ -1,6 +1,6 @@
 # sonar
 
-A lightweight Docker container metrics exporter for Prometheus, written in Rust.
+A lightweight Docker container metrics exporter for Prometheus, written in Rust, uses Serde and Axum
 
 ## Features
 
@@ -71,7 +71,7 @@ docker run -v /var/run/docker.sock:/var/run/docker.sock -p 3000:3000 sonar
 ## Docker Image & Resource Usage
 
 - **Image Size:** ~4.5 MB (compressed)
-- **Runtime Memory Usage:** 700–900 KB RAM
+- **Runtime Memory Usage:** 700–900 KB RAM, RSS ~1.5 MB, VIRT ~2 MB
 
 This makes the container lightweight and suitable for resource-constrained environments.
 
