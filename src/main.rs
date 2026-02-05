@@ -3,13 +3,15 @@ use clap::Parser;
 mod docker;
 mod models;
 mod prometheus;
-
 use docker::fetch_container_stats;
 use prometheus::json_to_prometheus;
+use tokio::signal;
 
 use axum::{Router, extract::State, response::Json, routing::get};
 use models::ContainerInfo;
 use std::sync::Arc;
+
+const SHUTDOWN_MSG: &str = "Shutting down...";
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -42,7 +44,6 @@ async fn get_container_metrics_json_handler(
 async fn get_container_metrics_prometheus_handler(
     State(state): State<Arc<Args>>,
 ) -> String {
-    println!("Inside get_container_metrics_prometheus_handler");
     let (containers, container_stats) =
         fetch_container_stats(&state.socket_path);
     json_to_prometheus(containers, container_stats)
@@ -60,5 +61,37 @@ async fn main() {
         .with_state(args);
 
     println!("Listening on {addr}");
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal())
+        .await
+        .unwrap();
+}
+
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {
+            println!("{SHUTDOWN_MSG}");
+
+        },
+        _ = terminate => {
+            println!("{SHUTDOWN_MSG}");
+        },
+    }
 }
